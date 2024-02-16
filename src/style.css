@@ -62,6 +62,12 @@ picture {
   }
 }
 
+@media (max-height: 500px) {
+  .title {
+    display: none;
+  }
+}
+
 .editor-container {
   overflow: hidden;
   border-radius: 10px;
@@ -71,6 +77,13 @@ picture {
   top: 65%;
   left: 50%;
   transform: translate(-50%, -50%);
+}
+
+.theme-select {
+  position: absolute;
+  z-index: 1;
+  bottom: 20px;
+  left: 20px;
 }
 
 @media (prefers-color-scheme: light) {

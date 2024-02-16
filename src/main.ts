@@ -24,11 +24,22 @@ self.MonacoEnvironment = {
   }
 }
 
-const editorContainer = document.getElementById('container');
+const editorContainer = document.getElementById('editor-container');
 if (editorContainer) {
   const editor = monaco.editor.create(editorContainer, {
     value: "function hello() {\n\talert('Hello world!');\n}",
     language: 'javascript',
-    theme: 'vs-dark'
+    theme: 'vs-light'
   });
+
+  const selectEl = document.getElementById('theme-select') as HTMLSelectElement;
+  if (selectEl) {
+    selectEl.addEventListener('change', (_) => {
+      if (selectEl.value === 'dark') {
+        editor.updateOptions({theme: 'vs-dark'});
+      } else if (selectEl.value === 'light') {
+        editor.updateOptions({theme: 'vs-light'});
+      }
+    });
+  }
 }

@@ -12,7 +12,12 @@
   <body>
     <img class="logo" src="/assets/NoteCodeLogo.svg" alt="NoteCode logo">
     <h1 class="title">Create & Share <span class="subtitle">Your Code easily</span></h1>
-    <div class="editor-container" id="container"></div>
+    <div class="editor-container" id="editor-container">
+      <select class="theme-select" name="editor-theme" id="theme-select">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
