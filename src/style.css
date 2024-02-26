@@ -79,10 +79,19 @@ picture {
   transform: translate(-50%, -50%);
 }
 
-.theme-select {
+.theme-select,
+.language-select {
+  width: 100px;
   position: absolute;
   z-index: 1;
   bottom: 20px;
+}
+
+.theme-select {
+  left: 160px;
+}
+
+.language-select {
   left: 20px;
 }
 
