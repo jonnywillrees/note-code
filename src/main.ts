@@ -24,22 +24,76 @@ self.MonacoEnvironment = {
   }
 }
 
-const editorContainer = document.getElementById('editor-container');
-if (editorContainer) {
+//! global variables
+const editorContainer = document.getElementById('editor-container') as HTMLDivElement;
+const themeSelectEl = document.getElementById('theme-select') as HTMLSelectElement;
+const languageSelectEl = document.getElementById('language-select') as HTMLSelectElement;
+const buttonEl = document.getElementById('share-button') as HTMLButtonElement;
+
+initEditor();
+
+function initEditor(): void {
   const editor = monaco.editor.create(editorContainer, {
-    value: "function hello() {\n\talert('Hello world!');\n}",
-    language: 'javascript',
-    theme: 'vs-light'
+    value: `<html>
+  <head>
+    <title>HTML Sample</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <style type="text/css">
+      h1 {
+        color: #CCA3A3;
+      }
+    </style>
+    <script type="text/javascript">
+      alert("I am a sample... visit devChallengs.io for more projects");
+    </script>
+  </head>
+  <body>
+    <h1>Heading No.1</h1>
+    <input disabled type="button" value="Click me" />
+  </body>
+</html>`,
+    language: 'html',
+    theme: 'vs'
   });
 
-  const selectEl = document.getElementById('theme-select') as HTMLSelectElement;
-  if (selectEl) {
-    selectEl.addEventListener('change', (_) => {
-      if (selectEl.value === 'dark') {
-        editor.updateOptions({theme: 'vs-dark'});
-      } else if (selectEl.value === 'light') {
-        editor.updateOptions({theme: 'vs-light'});
-      }
-    });
+  addEventListeners(editor);
+}
+
+function addEventListeners(editor: monaco.editor.IStandaloneCodeEditor): void {
+  themeSelectEl.addEventListener('change', changeTheme);
+  languageSelectEl.addEventListener('change', (_) => changeLanguage(editor));
+  buttonEl.addEventListener('click', shareCode);
+}
+
+function changeTheme(): void {
+  if (themeSelectEl.value === 'dark') {
+    monaco.editor.setTheme('vs-dark');
+  } else if (themeSelectEl.value === 'light') {
+    monaco.editor.setTheme('vs');
   }
+}
+
+function changeLanguage(editor: monaco.editor.IStandaloneCodeEditor): void {
+  const model = editor.getModel();
+  if (!model) return;
+
+  switch (languageSelectEl.value) {
+    case 'html':
+      monaco.editor.setModelLanguage(model, 'html');
+      break;
+    case 'javascript':
+      monaco.editor.setModelLanguage(model, 'javascript');
+      break;
+  }
+}
+
+function shareCode(): void {
+  const id = generateUniqueId();
+  window.history.pushState({id}, 'unique code snippet', id);
+}
+
+function generateUniqueId(): string {
+  // Generate a random number and convert it to base 36 (which uses letters and digits)
+  // Use current timestamp to ensure uniqueness
+  return Math.random().toString(36).substring(2, 9) + '_' + new Date().getTime().toString(36);
 }
