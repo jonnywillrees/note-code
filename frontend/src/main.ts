@@ -90,6 +90,21 @@ function changeLanguage(editor: monaco.editor.IStandaloneCodeEditor): void {
 function shareCode(): void {
   const id = generateUniqueId();
   window.history.pushState({id}, 'unique code snippet', id);
+
+  fetch('http://localhost:5000/snippets/' + id, {
+    method: 'post',
+    body: JSON.stringify({name: 'this is my name', description: 'adfasfas', code: 'helooasdfsa'}),
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    
+  })
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err => {
+      console.error(err);
+    });
 }
 
 function generateUniqueId(): string {
