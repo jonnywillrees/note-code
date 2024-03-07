@@ -29,11 +29,9 @@ const editorContainer = document.getElementById('editor-container') as HTMLDivEl
 const themeSelectEl = document.getElementById('theme-select') as HTMLSelectElement;
 const languageSelectEl = document.getElementById('language-select') as HTMLSelectElement;
 const buttonEl = document.getElementById('share-button') as HTMLButtonElement;
-
-// check url
+let editorSelectedLanguage = 'html';
 
 onLoadApp();
-initEditor();
 
 function onLoadApp(): void {
   const pathName = window.location.pathname;
@@ -47,19 +45,25 @@ function onLoadApp(): void {
       },
       
     })
-      .then(res => {
-        console.log(res);
+      .then(async (res) => {
+        if (res.ok && res.status === 200) {
+          const data = await res.json();
+          initEditor(data.code, data.language);
+        } else {
+          initEditor();
+        }
       })
       .catch(err => {
         console.error(err);
       });
+  } else {
+    initEditor();
   }
   
 }
 
-function initEditor(): void {
-  const editor = monaco.editor.create(editorContainer, {
-    value: `<html>
+function initEditor(code?: string, language?: string): void {
+  const DEFAULT_CODE: string = `<html>
   <head>
     <title>HTML Sample</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -76,10 +80,15 @@ function initEditor(): void {
     <h1>Heading No.1</h1>
     <input disabled type="button" value="Click me" />
   </body>
-</html>`,
-    language: 'html',
+</html>`;
+
+  const editor = monaco.editor.create(editorContainer, {
+    value: code ?? DEFAULT_CODE,
+    language: language ?? 'html',
     theme: 'vs'
   });
+
+  languageSelectEl.value = language ?? 'html';
 
   addEventListeners(editor);
 }
@@ -87,7 +96,7 @@ function initEditor(): void {
 function addEventListeners(editor: monaco.editor.IStandaloneCodeEditor): void {
   themeSelectEl.addEventListener('change', changeTheme);
   languageSelectEl.addEventListener('change', (_) => changeLanguage(editor));
-  buttonEl.addEventListener('click', shareCode);
+  buttonEl.addEventListener('click', (_) => shareCode(editor));
 }
 
 function changeTheme(): void {
@@ -110,15 +119,17 @@ function changeLanguage(editor: monaco.editor.IStandaloneCodeEditor): void {
       monaco.editor.setModelLanguage(model, 'javascript');
       break;
   }
+
+  editorSelectedLanguage = languageSelectEl.value;
 }
 
-function shareCode(): void {
+function shareCode(editor: monaco.editor.IStandaloneCodeEditor): void {
   const id = generateUniqueId();
   window.history.pushState({id}, 'unique code snippet', id);
 
   fetch('http://localhost:5000/api/snippets/' + id, {
     method: 'post',
-    body: JSON.stringify({name: 'this is my name', description: 'adfasfas', code: 'helooasdfsa'}),
+    body: JSON.stringify({code: editor.getValue(), language: editorSelectedLanguage}),
     headers: {
       'Content-Type': 'application/json'
     },
