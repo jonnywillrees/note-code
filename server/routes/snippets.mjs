@@ -1,19 +1,18 @@
 import express from 'express';
 import getDB from '../db/conn.mjs';
-import { ObjectId } from 'mongodb';
 
 const router = express.Router();
 
 // Get a list of 50 posts
-router.get('/', async (req, res) => {
-    let db = await getDB();
-    let collection = await db.collection('Snippets');
-    let results = await collection.find({})
-        .limit(50)
-        .toArray();
+// router.get('/', async (req, res) => {
+//     let db = await getDB();
+//     let collection = await db.collection('Snippets');
+//     let results = await collection.find({})
+//         .limit(50)
+//         .toArray();
 
-    res.send(results).status(200);
-});
+//     res.send(results).status(200);
+// });
 
 // Fetches the latest posts
 // router.get('/latest', async (req, res) => {
@@ -26,31 +25,29 @@ router.get('/', async (req, res) => {
 //   res.send(results).status(200);
 // });
 
-// Get a single post
+//! Get a single snippet
 router.get('/:id', async (req, res) => {
     let db = await getDB();
     let collection = await db.collection('Snippets');
-    let query = {_id: ObjectId(req.params.id)};
+    let query = {id: req.params.id};
     let result = await collection.findOne(query);
 
-    if (!result) res.send('Not found').status(404);
-    else res.send(result).status(200);
+    if (!result) {
+        res.status(404).send('Not found');
+    } else {
+        res.status(200).send(result);
+    }
 });
 
-// Add a new document to the collection
+//! Add a new document to the collection
 router.post('/:id', async (req, res) => {
-    try {
-        let db = await getDB();
-        let collection = await db.collection('Snippets');
-        let newDocument = req.body;
-        newDocument.id = req.params.id;
-        newDocument.date = new Date();
-        let result = await collection.insertOne(newDocument);
-        res.send(result).status(204);
-    } catch (error) {
-        console.error(error);
-        res.status(500).send(error);
-    }
+    let db = await getDB();
+    let collection = await db.collection('Snippets');
+    let newDocument = req.body;
+    newDocument.id = req.params.id;
+    newDocument.date = new Date();
+    let result = await collection.insertOne(newDocument);
+    res.send(result).status(204);
 });
 
 // Update the post with a new comment

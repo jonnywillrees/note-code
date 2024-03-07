@@ -11,10 +11,11 @@ app.use(cors());
 app.use(express.json());
 
 // Load the /snippets routes
-app.use('/snippets', snippets);
+app.use('/api/snippets', snippets);
 
 // Global error handling
 app.use((err, _req, res, _) => {
+  console.error(err);
   res.status(500).send('Uh oh! An unexpected error occured.');
 })
 
