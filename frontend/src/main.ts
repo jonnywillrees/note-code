@@ -30,7 +30,32 @@ const themeSelectEl = document.getElementById('theme-select') as HTMLSelectEleme
 const languageSelectEl = document.getElementById('language-select') as HTMLSelectElement;
 const buttonEl = document.getElementById('share-button') as HTMLButtonElement;
 
+// check url
+
+onLoadApp();
 initEditor();
+
+function onLoadApp(): void {
+  const pathName = window.location.pathname;
+  const snippetId = pathName.split('/')[1];
+
+  if (snippetId) {
+    fetch('http://localhost:5000/api/snippets/' + snippetId, {
+      method: 'get',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      
+    })
+      .then(res => {
+        console.log(res);
+      })
+      .catch(err => {
+        console.error(err);
+      });
+  }
+  
+}
 
 function initEditor(): void {
   const editor = monaco.editor.create(editorContainer, {
@@ -91,7 +116,7 @@ function shareCode(): void {
   const id = generateUniqueId();
   window.history.pushState({id}, 'unique code snippet', id);
 
-  fetch('http://localhost:5000/snippets/' + id, {
+  fetch('http://localhost:5000/api/snippets/' + id, {
     method: 'post',
     body: JSON.stringify({name: 'this is my name', description: 'adfasfas', code: 'helooasdfsa'}),
     headers: {
