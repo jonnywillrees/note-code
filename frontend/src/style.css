@@ -24,6 +24,10 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
+  --color-white: #FFFFFE;
+  --color-dark-text: #121826;
+  --color-grey: #364153;
+  --color-light-text: #CED6E1;
   --color-blue: #406AFF;
 
 }
@@ -98,6 +102,17 @@ picture {
   left: 20px;
 }
 
+.buttons-container {
+  position: absolute;
+  z-index: 6;
+  bottom: 20px;
+  right: 20px;
+
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .share-button {
   padding: 0.6rem 1.6rem;
   border-radius: 9999px;
@@ -106,12 +121,14 @@ picture {
   gap: 0.6rem;
   border: 1px solid currentColor;
   cursor: pointer;
-  position: absolute;
-  z-index: 6;
-  bottom: 20px;
-  right: 20px;
   background-color: var(--color-blue);
   font: inherit;
+  color: var(--color-white);
+}
+
+.share-button:disabled {
+  background-color: var(--color-light-text);
+  cursor: auto;
 }
 
 @media (prefers-color-scheme: light) {

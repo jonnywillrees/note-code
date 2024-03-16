@@ -125,7 +125,6 @@ function changeLanguage(editor: monaco.editor.IStandaloneCodeEditor): void {
 
 function shareCode(editor: monaco.editor.IStandaloneCodeEditor): void {
   const id = generateUniqueId();
-  window.history.pushState({id}, 'unique code snippet', id);
 
   fetch('http://localhost:5000/api/snippets/' + id, {
     method: 'post',
@@ -135,12 +134,34 @@ function shareCode(editor: monaco.editor.IStandaloneCodeEditor): void {
     },
     
   })
-    .then(res => {
-      console.log(res);
+    .then(_ => {
+      // only change URL if the API call succeeds
+      window.history.pushState({id}, 'unique code snippet', id);
+      buttonEl.setAttribute('disabled', 'true');
+      appendShareableLink();
     })
     .catch(err => {
+      // TODO: add some kind of user friendly error alert instead of console.error the error message
       console.error(err);
     });
+}
+
+function appendShareableLink(): void {
+  const btnsContainer = document.getElementById('buttons-container') as HTMLDivElement;
+  const shareLinkEl = document.createElement('a');
+  shareLinkEl.href = window.location.href;
+  shareLinkEl.innerText = window.location.href;
+  btnsContainer.insertBefore(shareLinkEl, buttonEl);
+
+  shareLinkEl.addEventListener('click', async (e) => {
+    e.preventDefault();
+    
+    const copyText = (e.target as HTMLAnchorElement).href;
+    await navigator.clipboard.writeText(copyText);
+     // TODO: add some kind of user friendly success alert instead of alert()
+    alert('your link has been copied to clipboard!');
+  });
+
 }
 
 function generateUniqueId(): string {
