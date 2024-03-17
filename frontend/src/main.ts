@@ -29,7 +29,10 @@ const editorContainer = document.getElementById('editor-container') as HTMLDivEl
 const themeSelectEl = document.getElementById('theme-select') as HTMLSelectElement;
 const languageSelectEl = document.getElementById('language-select') as HTMLSelectElement;
 const buttonEl = document.getElementById('share-button') as HTMLButtonElement;
-let editorSelectedLanguage = 'html';
+const copyToClipboardLinkEl = document.getElementById('copy-to-clipboard') as HTMLAnchorElement;
+let currentEditorLanguage = '';
+let currentEditorValue = '';
+let codeHasBeenShared = false;
 
 onLoadApp();
 
@@ -42,19 +45,22 @@ function onLoadApp(): void {
       method: 'get',
       headers: {
         'Content-Type': 'application/json'
-      },
-      
+      }
     })
       .then(async (res) => {
         if (res.ok && res.status === 200) {
           const data = await res.json();
           initEditor(data.code, data.language);
         } else {
+          console.error(`${res.status} ${res.statusText}`);
           initEditor();
+          window.location.assign(window.location.origin);
         }
       })
       .catch(err => {
         console.error(err);
+        initEditor();
+        window.location.assign(window.location.origin);
       });
   } else {
     initEditor();
@@ -81,14 +87,17 @@ function initEditor(code?: string, language?: string): void {
     <input disabled type="button" value="Click me" />
   </body>
 </html>`;
+  const DEFAULT_LANGUAGE = 'html';
 
   const editor = monaco.editor.create(editorContainer, {
     value: code ?? DEFAULT_CODE,
-    language: language ?? 'html',
+    language: language ?? DEFAULT_LANGUAGE,
     theme: 'vs'
   });
-
-  languageSelectEl.value = language ?? 'html';
+  
+  currentEditorLanguage = language ?? DEFAULT_LANGUAGE;
+  currentEditorValue = code ?? DEFAULT_CODE;
+  languageSelectEl.value = language ?? DEFAULT_LANGUAGE;
 
   addEventListeners(editor);
 }
@@ -97,6 +106,9 @@ function addEventListeners(editor: monaco.editor.IStandaloneCodeEditor): void {
   themeSelectEl.addEventListener('change', changeTheme);
   languageSelectEl.addEventListener('change', (_) => changeLanguage(editor));
   buttonEl.addEventListener('click', (_) => shareCode(editor));
+  copyToClipboardLinkEl.addEventListener('click', (e) => copyToClipboard(e));
+  editor.getModel()?.onDidChangeContent((_) => onEditorChange(editor));
+  editor.getModel()?.onDidChangeLanguage((_) => onEditorChange(editor));
 }
 
 function changeTheme(): void {
@@ -119,8 +131,6 @@ function changeLanguage(editor: monaco.editor.IStandaloneCodeEditor): void {
       monaco.editor.setModelLanguage(model, 'javascript');
       break;
   }
-
-  editorSelectedLanguage = languageSelectEl.value;
 }
 
 function shareCode(editor: monaco.editor.IStandaloneCodeEditor): void {
@@ -128,17 +138,25 @@ function shareCode(editor: monaco.editor.IStandaloneCodeEditor): void {
 
   fetch('http://localhost:5000/api/snippets/' + id, {
     method: 'post',
-    body: JSON.stringify({code: editor.getValue(), language: editorSelectedLanguage}),
+    body: JSON.stringify({code: editor.getValue(), language: languageSelectEl.value}),
     headers: {
       'Content-Type': 'application/json'
     },
     
   })
-    .then(_ => {
-      // only change URL if the API call succeeds
-      window.history.pushState({id}, 'unique code snippet', id);
-      buttonEl.setAttribute('disabled', 'true');
-      appendShareableLink();
+    .then(async (res) => {
+      if (res.ok && res.status === 200) {
+        // only change URL if the API call succeeds
+        window.history.pushState({id}, 'unique code snippet', id);
+        buttonEl.setAttribute('disabled', 'true');
+        showCopyToClipboardLink();
+        currentEditorValue = editor.getValue();
+        codeHasBeenShared = true;
+        currentEditorLanguage = languageSelectEl.value;
+      } else {
+        // TODO: add some kind of user friendly error alert instead of console.error the error message
+        console.error(`${res.status} ${res.statusText}`);
+      }
     })
     .catch(err => {
       // TODO: add some kind of user friendly error alert instead of console.error the error message
@@ -146,22 +164,33 @@ function shareCode(editor: monaco.editor.IStandaloneCodeEditor): void {
     });
 }
 
-function appendShareableLink(): void {
-  const btnsContainer = document.getElementById('buttons-container') as HTMLDivElement;
-  const shareLinkEl = document.createElement('a');
-  shareLinkEl.href = window.location.href;
-  shareLinkEl.innerText = window.location.href;
-  btnsContainer.insertBefore(shareLinkEl, buttonEl);
+function showCopyToClipboardLink(): void {
+  copyToClipboardLinkEl.classList.remove('d-none');
+  copyToClipboardLinkEl.href = window.location.href;
+  copyToClipboardLinkEl.innerText = window.location.href;
+}
 
-  shareLinkEl.addEventListener('click', async (e) => {
-    e.preventDefault();
-    
-    const copyText = (e.target as HTMLAnchorElement).href;
-    await navigator.clipboard.writeText(copyText);
-     // TODO: add some kind of user friendly success alert instead of alert()
-    alert('your link has been copied to clipboard!');
-  });
+async function copyToClipboard(e: MouseEvent): Promise<void> {
+  e.preventDefault();
+  
+  const copyText = (e.target as HTMLAnchorElement).href;
+  await navigator.clipboard.writeText(copyText);
+  // TODO: add some kind of user friendly success alert instead of alert()
+  alert('your link has been copied to clipboard!');
+}
 
+function onEditorChange(editor: monaco.editor.IStandaloneCodeEditor): void {
+  if (!window.location.pathname.split('/')[1] || !codeHasBeenShared) return;
+
+  if (currentEditorValue === editor.getValue() && currentEditorLanguage === languageSelectEl.value) {
+    // value of editor has remained the same since last share
+    buttonEl.setAttribute('disabled', 'true');
+    copyToClipboardLinkEl.classList.remove('d-none');
+  } else {
+    // value of editor has changed since last share
+    buttonEl.removeAttribute('disabled');
+    copyToClipboardLinkEl.classList.add('d-none');
+  }
 }
 
 function generateUniqueId(): string {

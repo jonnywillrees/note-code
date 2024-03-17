@@ -143,3 +143,8 @@ picture {
     background-color: #f9f9f9;
   }
 }
+
+/* Utilities */
+.d-none {
+  display: none;
+}

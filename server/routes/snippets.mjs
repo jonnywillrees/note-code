@@ -33,9 +33,9 @@ router.get('/:id', async (req, res) => {
     let result = await collection.findOne(query);
 
     if (!result) {
-        res.status(404).send('Not found');
+        res.status(404).end();
     } else {
-        res.status(200).send(result);
+        res.send(result);
     }
 });
 
@@ -46,8 +46,8 @@ router.post('/:id', async (req, res) => {
     let newDocument = req.body;
     newDocument.id = req.params.id;
     newDocument.date = new Date();
-    let result = await collection.insertOne(newDocument);
-    res.send(result).status(204);
+    await collection.insertOne(newDocument);
+    res.send(newDocument);
 });
 
 // Update the post with a new comment
