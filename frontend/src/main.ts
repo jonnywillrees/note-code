@@ -32,7 +32,8 @@ const buttonEl = document.getElementById('share-button') as HTMLButtonElement;
 const copyToClipboardLinkEl = document.getElementById('copy-to-clipboard') as HTMLAnchorElement;
 let currentEditorLanguage = '';
 let currentEditorValue = '';
-let codeHasBeenShared = false;
+// const apiUri = 'https://note-code-k4vytpjvrq-uc.a.run.app';
+const apiUri = 'http://localhost:5000';
 
 onLoadApp();
 
@@ -41,7 +42,7 @@ function onLoadApp(): void {
   const snippetId = pathName.split('/')[1];
 
   if (snippetId) {
-    fetch('http://localhost:5000/api/snippets/' + snippetId, {
+    fetch(`${apiUri}/api/snippets/` + snippetId, {
       method: 'get',
       headers: {
         'Content-Type': 'application/json'
@@ -51,6 +52,7 @@ function onLoadApp(): void {
         if (res.ok && res.status === 200) {
           const data = await res.json();
           initEditor(data.code, data.language);
+          setSnippetHasBeenSharedState();
         } else {
           console.error(`${res.status} ${res.statusText}`);
           initEditor();
@@ -65,7 +67,17 @@ function onLoadApp(): void {
   } else {
     initEditor();
   }
-  
+
+  // event listener for when location.history changes
+  addEventListener('popstate', (_) => {
+    if (window.location.pathname.split('/')[1]) {
+      // get snippet and set state
+
+    } else {
+      // reset to default state
+
+    }
+  });
 }
 
 function initEditor(code?: string, language?: string): void {
@@ -134,24 +146,21 @@ function changeLanguage(editor: monaco.editor.IStandaloneCodeEditor): void {
 }
 
 function shareCode(editor: monaco.editor.IStandaloneCodeEditor): void {
-  const id = generateUniqueId();
+  const ID = generateUniqueId();
 
-  fetch('http://localhost:5000/api/snippets/' + id, {
+  fetch(`${apiUri}/api/snippets/` + ID, {
     method: 'post',
     body: JSON.stringify({code: editor.getValue(), language: languageSelectEl.value}),
     headers: {
       'Content-Type': 'application/json'
-    },
-    
+    }
   })
     .then(async (res) => {
       if (res.ok && res.status === 200) {
         // only change URL if the API call succeeds
-        window.history.pushState({id}, 'unique code snippet', id);
-        buttonEl.setAttribute('disabled', 'true');
-        showCopyToClipboardLink();
+        window.history.pushState({id: ID}, 'unique code snippet', ID);
+        setSnippetHasBeenSharedState();
         currentEditorValue = editor.getValue();
-        codeHasBeenShared = true;
         currentEditorLanguage = languageSelectEl.value;
       } else {
         // TODO: add some kind of user friendly error alert instead of console.error the error message
@@ -164,7 +173,11 @@ function shareCode(editor: monaco.editor.IStandaloneCodeEditor): void {
     });
 }
 
-function showCopyToClipboardLink(): void {
+function setSnippetHasBeenSharedState(): void {
+  // disable share button
+  buttonEl.setAttribute('disabled', 'true');
+
+  // enable/show the copy to clipboard link
   copyToClipboardLinkEl.classList.remove('d-none');
   copyToClipboardLinkEl.href = window.location.href;
   copyToClipboardLinkEl.innerText = window.location.href;
@@ -180,7 +193,7 @@ async function copyToClipboard(e: MouseEvent): Promise<void> {
 }
 
 function onEditorChange(editor: monaco.editor.IStandaloneCodeEditor): void {
-  if (!window.location.pathname.split('/')[1] || !codeHasBeenShared) return;
+  if (!window.location.pathname.split('/')[1]) return;
 
   if (currentEditorValue === editor.getValue() && currentEditorLanguage === languageSelectEl.value) {
     // value of editor has remained the same since last share
